@@ -1,6 +1,6 @@
 import asyncio
 import random
-from sqlalchemy import text
+from sqlalchemy import text, insert
 from services.models import Base, Account, Portfolio
 from config import obtain_engine, obtain_session_factory
 
@@ -43,7 +43,8 @@ async def populate():
                 quantity = random.randint(1, 1000)
                 portfolios.append(Portfolio(account_id=account.id, stock_symbol=symbol, quantity=quantity))
 
-        session.bulk_save_objects(portfolios)
+        if portfolios:
+            await session.execute(insert(Portfolio), [p.__dict__ for p in portfolios])
         await session.commit()
         print(f"Dummy data populated for {NUM_ACCOUNTS} accounts.")
 

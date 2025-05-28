@@ -1,4 +1,4 @@
-from sqlalchemy import select, func
+from sqlalchemy import select, func, insert
 from services.models import Account, Portfolio
 from services.priority_stock_service import get_priority_stocks_with_prices
 from config import obtain_session_factory
@@ -76,7 +76,7 @@ async def rebalance_all_accounts():
                 if bought > 0:
                     updated_count += 1
             if new_portfolios:
-                await session.bulk_save_objects(new_portfolios)
+                await session.execute(insert(Portfolio), [p.__dict__ for p in new_portfolios])
                 await session.commit()
             return updated_count
 
