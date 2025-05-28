@@ -6,7 +6,7 @@ class PortfolioOut(BaseModel):
     stock_symbol: str
     quantity: float
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class PortfolioCreate(BaseModel):
     stock_symbol: str
@@ -17,7 +17,7 @@ class AccountOut(BaseModel):
     wallet_balance: float
     portfolio: List[PortfolioOut]
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class AccountCreate(BaseModel):
     wallet_balance: float = 0

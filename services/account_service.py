@@ -1,15 +1,14 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from services.models import Account, Portfolio
 from services.schemas import AccountCreate
 
 async def get_accounts_with_portfolios(db: AsyncSession, offset: int, limit: int):
     result = await db.execute(
-        select(Account).offset(offset).limit(limit)
+        select(Account).options(selectinload(Account.portfolio)).offset(offset).limit(limit)
     )
     accounts = result.scalars().unique().all()
-    for account in accounts:
-        await db.refresh(account)
     return accounts
 
 async def create_account_with_portfolio(db: AsyncSession, account_data: AccountCreate):
