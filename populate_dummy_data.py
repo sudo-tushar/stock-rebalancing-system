@@ -43,7 +43,7 @@ async def populate():
                 quantity = random.randint(1, 1000)
                 portfolios.append(Portfolio(account_id=account.id, stock_symbol=symbol, quantity=quantity))
 
-        session.add_all(portfolios)
+        session.bulk_save_objects(portfolios)
         await session.commit()
         print(f"Dummy data populated for {NUM_ACCOUNTS} accounts.")
 
