@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, status, Query
+from fastapi import APIRouter, Depends, status, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from config import obtain_session_factory
 from services.schemas import AccountOut, AccountCreate
 from services.account_service import get_accounts_with_portfolios, create_account_with_portfolio
 from services.rebalance_service import rebalance_all_accounts
 import time
-from typing import List
+from typing import List, Optional
 import asyncio
 from populate_dummy_data import populate
 
@@ -33,8 +33,8 @@ async def create_account_endpoint(
     return await create_account_with_portfolio(db, account)
 
 @admin_router.post("/populate-dummy-data", status_code=status.HTTP_202_ACCEPTED)
-async def populate_dummy_data_endpoint():
-    await populate()
+async def populate_dummy_data_endpoint(num_accounts: Optional[int] = Body(None, embed=True)):
+    await populate(num_accounts=num_accounts)
     return {"status": "success", "message": "Dummy data populated."}
 
 @admin_router.post("/rebalance-portfolios", status_code=status.HTTP_202_ACCEPTED)
