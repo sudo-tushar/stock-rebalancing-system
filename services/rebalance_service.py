@@ -75,8 +75,9 @@ async def rebalance_all_accounts():
                         break
                 if bought > 0:
                     updated_count += 1
-            session.add_all(new_portfolios)
-            await session.commit()
+            if new_portfolios:
+                await session.bulk_save_objects(new_portfolios)
+                await session.commit()
             return updated_count
 
     results = await asyncio.gather(*(limited_process_batch(batch) for batch in batches))
