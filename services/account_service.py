@@ -22,5 +22,9 @@ async def create_account_with_portfolio(db: AsyncSession, account_data: AccountC
             db.add(portfolio)
             portfolios.append(portfolio)
     await db.commit()
-    await db.refresh(account)
-    return account 
+    # Eagerly load portfolio before returning
+    result = await db.execute(
+        select(Account).options(selectinload(Account.portfolio)).where(Account.id == account.id)
+    )
+    account_with_portfolio = result.scalars().unique().one()
+    return account_with_portfolio 
