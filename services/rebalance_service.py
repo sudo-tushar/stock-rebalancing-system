@@ -1,4 +1,4 @@
-from sqlalchemy import select, func, insert
+from sqlalchemy import select, func, insert, update
 from services.models import Account, Portfolio
 from services.priority_stock_service import get_priority_stocks_with_prices
 from config import obtain_session_factory
@@ -50,6 +50,7 @@ async def rebalance_all_accounts():
             portfolios_by_account = {}
             for account_id, stock_symbol in all_portfolios:
                 portfolios_by_account.setdefault(account_id, set()).add(stock_symbol)
+            updated_accounts_data = []
             for account in batch:
                 held_stocks = portfolios_by_account.get(account.id, set())
                 num_held = len(held_stocks)
@@ -58,6 +59,7 @@ async def rebalance_all_accounts():
                 num_to_buy = NUMBER_OF_STOCKS_TO_HOLD - num_held
                 invest_per_stock = account.wallet_balance / num_to_buy
                 bought = 0
+                orig_balance = account.wallet_balance
                 for stock in priority_stocks:
                     symbol = stock["symbol"]
                     price = stock["price"]
@@ -75,9 +77,16 @@ async def rebalance_all_accounts():
                         break
                 if bought > 0:
                     updated_count += 1
+                    if account.wallet_balance != orig_balance:
+                        updated_accounts_data.append({"id": account.id, "wallet_balance": account.wallet_balance})
             if new_portfolios:
                 await session.execute(insert(Portfolio), [p.__dict__ for p in new_portfolios])
-                await session.commit()
+            if updated_accounts_data:
+                for acc in updated_accounts_data:
+                    await session.execute(
+                        update(Account).where(Account.id == acc["id"]).values(wallet_balance=acc["wallet_balance"])
+                    )
+            await session.commit()
             return updated_count
 
     results = await asyncio.gather(*(limited_process_batch(batch) for batch in batches))
